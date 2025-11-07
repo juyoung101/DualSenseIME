@@ -1,5 +1,5 @@
 from cProfile import label
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
 from PySide6.QtCore import Qt
 from pydualsense import pydualsense, TriggerModes
 import pyautogui
@@ -157,28 +157,48 @@ class MainWindow(QMainWindow):
         self.round_widget.setStyleSheet(
             """
             background:rgba(50, 50, 50, 255);
-            border-radius: 0px;
+            border-radius: 100px;
             font-size: 16px;
+            font-style: bold;
             """
         )
         
-        lay = QVBoxLayout(self.round_widget)
+        lay = QGridLayout(self.round_widget)
 
         self.label = QLabel('He')
         self.label.setAlignment(Qt.AlignCenter)
-        lay.addWidget(self.label)
+        lay.addWidget(self.label, 0, 1)
         
         self.label2 = QLabel('llo')
         self.label2.setAlignment(Qt.AlignCenter)
-        lay.addWidget(self.label2)
+        lay.addWidget(self.label2, 1, 0)
 
         self.label3 = QLabel(', Wo')
         self.label3.setAlignment(Qt.AlignCenter)
-        lay.addWidget(self.label3)
+        lay.addWidget(self.label3, 1, 2)
         
         self.label4 = QLabel('rld!')
         self.label4.setAlignment(Qt.AlignCenter)
-        lay.addWidget(self.label4)
+        lay.addWidget(self.label4, 2, 1)
+
+        #
+
+        self.label5 = QLabel('He')
+        self.label5.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.label5, 0, 5)
+        
+        self.label6 = QLabel('llo')
+        self.label6.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.label6, 1, 4)
+
+        self.label7 = QLabel(', Wo')
+        self.label7.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.label7, 1, 6)
+        
+        self.label8 = QLabel('rld!')
+        self.label8.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.label8, 2, 5)
+
 
         self.show()
 
