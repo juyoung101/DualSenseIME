@@ -220,8 +220,6 @@ class Controller():
         self.default_listeners(ds)
 
 class MainWindow(QMainWindow):#main window
-
-    
     window_style_sheet = """
         background:rgba(50, 50, 50, 250);
         border-radius: 100px;
@@ -238,7 +236,7 @@ class MainWindow(QMainWindow):#main window
         background-color:none;
     """
     style_active_b = """
-        background-color:#004400;
+        background-color:none;
         """
     style_inactive_b = """
         background-color:none;
