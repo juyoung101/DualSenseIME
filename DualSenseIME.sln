@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8 d17.14
+VisualStudioVersion = 17.14.36623.8
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PythonApplication2", "PythonApplication2.pyproj", "{5A751C45-0370-4B1E-9751-BFF62F964245}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "DualSenseIME", "DualSenseIME.pyproj", "{5A751C45-0370-4B1E-9751-BFF62F964245}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
