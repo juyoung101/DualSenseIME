@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QApplication, QMainWindow
-from PySide6.QtWidgets import QWidget
+from cProfile import label
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt
 from pydualsense import pydualsense, TriggerModes
 import pyautogui
@@ -144,27 +144,46 @@ def run_test():
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        v_width = 200
-        v_height = 100
+        v_width = 400
+        v_height = 200
         #main window
         self.resize(v_width, v_height)
         #remove frame
         self.setWindowFlag(Qt.FramelessWindowHint)
         #make the main window transparent
         self.setAttribute(Qt.WA_TranslucentBackground)
-
-        #round widget
         self.round_widget = QWidget(self)
         self.round_widget.resize(v_width, v_height)
-
         self.round_widget.setStyleSheet(
             """
-            background:rgba(50, 50, 50, 150);
-            border-radius: 50px;
+            background:rgba(50, 50, 50, 255);
+            border-radius: 0px;
+            font-size: 16px;
             """
         )
+        
+        lay = QVBoxLayout(self.round_widget)
+
+        self.label = QLabel('He')
+        self.label.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.label)
+        
+        self.label2 = QLabel('llo')
+        self.label2.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.label2)
+
+        self.label3 = QLabel(', Wo')
+        self.label3.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.label3)
+        
+        self.label4 = QLabel('rld!')
+        self.label4.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.label4)
 
         self.show()
 
 if __name__ == "__main__":
-    run_test()
+    #run_test()
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    sys.exit(app.exec())
