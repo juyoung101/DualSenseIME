@@ -1,19 +1,20 @@
 from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt
-import pyautogui
 from pydualsense import pydualsense, TriggerModes
+import pyautogui
 import sys
+
+#['ctrl']['shift']['alt']['macro']['KEY']
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
-        w = 200
-        h = 100
-
+        v_width = 200
+        v_height = 100
         #main window
-        self.resize(w, h)
+        self.resize(v_width, v_height)
         #remove frame
         self.setWindowFlag(Qt.FramelessWindowHint)
         #make the main window transparent
@@ -21,7 +22,7 @@ class MainWindow(QMainWindow):
 
         #round widget
         self.round_widget = QWidget(self)
-        self.round_widget.resize(w, h)
+        self.round_widget.resize(v_width, v_height)
 
         self.round_widget.setStyleSheet(
             """
@@ -30,9 +31,7 @@ class MainWindow(QMainWindow):
             """
         )
 
-        #self.setStyleSheet("border-radius: 10px;".format(radius))
         self.show()
-
 
 
 def test_pyautogui():
@@ -59,13 +58,13 @@ def test_pydualsense():
     #print(input())
     #ds.close() # closing the controller
 
-
-def run():
-    test_pyautogui()
-    test_pydualsense()
+def run_test():
+    #test_pyautogui()
+    #test_pydualsense()
+    return
 
 if __name__ == "__main__":
-    run()
+    run_test()
     app = QApplication(sys.argv)
     window = MainWindow()
 
