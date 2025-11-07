@@ -1,10 +1,26 @@
 ﻿from cProfile import label
+from multiprocessing import Value
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
 from PySide6.QtCore import Qt
 from pydualsense import pydualsense, TriggerModes
+from enum import Enum
 import pyautogui
 import json
 import sys
+
+class Labels(Enum):
+    UP = 1
+    LF = 2
+    RT = 3
+    DN = 4
+    TR = 5
+    SQ = 6
+    CI = 7
+    CR = 8
+    L1 = 9
+    R1 = 10
+    L2 = 11
+    R2 = 12
 
 class ButtonMap():
     _bumpers = {"L1": False, "R1": False, "L2": False, "R2": False}
@@ -143,17 +159,7 @@ def run_test():
     return
 
 class Controller():
-    def __init__(self):
-        ds = pydualsense() # open controller
-        self.setup(ds)
-        
-    def setup(self, ds):
-        ds.init() # initialize controller
-        ds.light.setColorI(0,255,0) # set touchpad color to green
-        ds.triggerL.setMode(TriggerModes.Rigid)
-        ds.triggerL.setForce(1, 255)
-
-        
+    def default_listeners(self, ds):
         def dpad_up_pressed(state):
             print("UP:", state)
         ds.dpad_up += dpad_up_pressed
@@ -202,63 +208,134 @@ class Controller():
             print("R2:", state)
         ds.r2_changed  += r2_changed
 
-class MainWindow(QMainWindow):
+    def __init__(self):
+        ds = pydualsense() # open controller
+        self.setup(ds)
+        
+    def setup(self, ds):
+        ds.init() # initialize controller
+        ds.light.setColorI(0,255,0) # set touchpad color to green
+        ds.triggerL.setMode(TriggerModes.Rigid)
+        ds.triggerL.setForce(1, 255)
+        self.default_listeners(ds)
+
+class MainWindow(QMainWindow):#main window
+
+    
+    window_style_sheet = """
+        background:rgba(50, 50, 50, 250);
+        border-radius: 100px;
+        font-size: 60px;
+        font-style: bold;
+        padding:5px;
+        color:#FFFFFF;
+        font-size: 20px;
+    """
+    style_active_l = """
+        background-color:green;
+        """
+    style_inactive_l = """
+        background-color:none;
+    """
+    style_active_b = """
+        background-color:#004400;
+        """
+    style_inactive_b = """
+        background-color:none;
+    """
+    
+    labels = {}
+
+    def update_label(self, key, value):
+        self.labels[key] = value
+        return
+
+    def update_bumper_style(self, key, value):
+        if value:
+            self.labels[key].setStyleSheet(self.style_active_l)
+        else:
+            self.labels[key].setStyleSheet(self.style_inactive_l)
+
+    def update_label_style(self, key, value):
+        if value:
+            self.labels[key].setStyleSheet(self.style_active_l)
+        else:
+            self.labels[key].setStyleSheet(self.style_inactive_l)
+
     def __init__(self):
         super().__init__()
         v_width = 400
         v_height = 200
-        #main window
         self.resize(v_width, v_height)
-        #remove frame
         self.setWindowFlag(Qt.FramelessWindowHint)
-        #make the main window transparent
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.round_widget = QWidget(self)
         self.round_widget.resize(v_width, v_height)
-        self.round_widget.setStyleSheet(
-            """
-            background:rgba(50, 50, 50, 250);
-            border-radius: 100px;
-            font-size: 60px;
-            font-style: bold;
-            """
-        )
+        self.round_widget.setStyleSheet(self.window_style_sheet)
         
         lay = QGridLayout(self.round_widget)
 
         self.label = QLabel('↑')
-        self.label.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label, 0, 1)
+        self.labels[Labels.UP] = self.label
         
         self.label2 = QLabel('←')
-        self.label2.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label2, 1, 0)
+        self.labels[Labels.LF] = self.label2
 
         self.label3 = QLabel('→')
-        self.label3.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label3, 1, 2)
+        self.labels[Labels.RT] = self.label3
         
         self.label4 = QLabel('↓')
-        self.label4.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label4, 2, 1)
+        self.labels[Labels.DN] = self.label4
 
         #
 
         self.label5 = QLabel('△')
-        self.label5.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label5, 0, 5)
+        self.labels[Labels.TR] = self.label5
         
         self.label6 = QLabel('⃞')
-        self.label6.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label6, 1, 4)
+        self.labels[Labels.SQ] = self.label6
 
         self.label7 = QLabel('○')
-        self.label7.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label7, 1, 6)
+        self.labels[Labels.CI] = self.label7
         
         self.label8 = QLabel('🞩')
-        self.label8.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label8, 2, 5)
+        self.labels[Labels.CR] = self.label8
+        
+        #
+        
+        self.label9 = QLabel('L1')
+        lay.addWidget(self.label9, 0, 0)
+        self.labels[Labels.L1] = self.label9
+
+        self.label10 = QLabel('R1')
+        lay.addWidget(self.label10, 0, 6)
+        self.labels[Labels.R1] = self.label10
+
+        self.label11 = QLabel('L2')
+        lay.addWidget(self.label11, 2, 0)
+        self.labels[Labels.L2] = self.label11
+
+        self.label12 = QLabel('R2')
+        lay.addWidget(self.label12, 2, 6)
+        self.labels[Labels.R2] = self.label12
+
+
+        for i in Labels:
+            if i.value >= Labels.L1.value:
+                self.labels[i].setStyleSheet(self.style_active_b)
+            else:
+                self.labels[i].setStyleSheet(self.style_active_l)
+            self.labels[i].setAlignment(Qt.AlignCenter)
+
+        
 
 
         self.show()
