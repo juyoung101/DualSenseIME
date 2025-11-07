@@ -153,6 +153,23 @@ class Controller():
         ds.triggerL.setMode(TriggerModes.Rigid)
         ds.triggerL.setForce(1, 255)
 
+        
+        def dpad_up_pressed(state):
+            print("UP:", state)
+        ds.dpad_up += dpad_up_pressed
+
+        def dpad_left_pressed(state):
+            print("LF:", state)
+        ds.dpad_left += dpad_left_pressed
+                
+        def dpad_right_pressed(state):
+            print("RT:", state)
+        ds.dpad_right += dpad_right_pressed
+        
+        def dpad_down_pressed(state):
+            print("DN:", state)
+        ds.dpad_down += dpad_down_pressed
+
         def cross_pressed(state):
             print("Cross:", state)
         ds.cross_pressed += cross_pressed
@@ -168,9 +185,22 @@ class Controller():
         def triangle_pressed(state):
             print("Triangle:", state)
         ds.triangle_pressed += triangle_pressed
-
         
+        def l1_changed(state):
+            print("L1:", state)
+        ds.l1_changed  += l1_changed
 
+        def r1_changed(state):
+            print("R1:", state)
+        ds.r1_changed  += r1_changed
+
+        def l2_changed(state):
+            print("L2:", state)
+        ds.l2_changed  += l2_changed
+
+        def r2_changed(state):
+            print("R2:", state)
+        ds.r2_changed  += r2_changed
 
 class MainWindow(QMainWindow):
     def __init__(self):
