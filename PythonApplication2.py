@@ -40,7 +40,7 @@ def test_pyautogui():
    #pyautogui.typewrite('Hello world!\n', interval=0.5)
    print(pyautogui.KEYBOARD_KEYS)
    print(len(pyautogui.KEYBOARD_KEYS))
-   pyautogui.hotkey('ctrl', 'v')
+   pyautogui.hotkey('ctrl', 'shift', 'alt', 'win', 'l')
    print(input())
    #pyautogui.keyDown(pyautogui.KEYBOARD_KEYS)
    
@@ -53,7 +53,7 @@ def test_pydualsense():
     ds.init() # initialize controller
 
     ds.cross_pressed += cross_pressed
-    ds.light.setColorI(0,255,0) # set touchpad color to red
+    ds.light.setColorI(0,255,0) # set touchpad color to green
     ds.triggerL.setMode(TriggerModes.Rigid)
     ds.triggerL.setForce(1, 255)
     #print(input())
