@@ -1,4 +1,4 @@
-from cProfile import label
+﻿from cProfile import label
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
 from PySide6.QtCore import Qt
 from pydualsense import pydualsense, TriggerModes
@@ -100,10 +100,11 @@ def test_pyautogui():
    print(pyautogui.KEYBOARD_KEYS)
    print(len(pyautogui.KEYBOARD_KEYS))
 
-def test_pydualsense():
+def test_pydualsense(window):
     def cross_pressed(state):
         print("Cross button state: ")
         print(state)
+        window.label.setStyleSheet('background-clip: content-box; background-color: green;')
 
     ds = pydualsense() # open controller
     ds.init() # initialize controller
@@ -113,7 +114,7 @@ def test_pydualsense():
     ds.triggerL.setMode(TriggerModes.Rigid)
     ds.triggerL.setForce(1, 255)
     print(input()) #hang for testing
-    ds.close() # closing the controller
+   # ds.close() # closing the controller
 
 def test_window():
     app = QApplication(sys.argv)
@@ -141,6 +142,36 @@ def run_test():
     test_window()
     return
 
+class Controller():
+    def __init__(self):
+        ds = pydualsense() # open controller
+        self.setup(ds)
+        
+    def setup(self, ds):
+        ds.init() # initialize controller
+        ds.light.setColorI(0,255,0) # set touchpad color to green
+        ds.triggerL.setMode(TriggerModes.Rigid)
+        ds.triggerL.setForce(1, 255)
+
+        def cross_pressed(state):
+            print("Cross:", state)
+        ds.cross_pressed += cross_pressed
+
+        def square_pressed(state):
+            print("Square:", state)
+        ds.square_pressed += square_pressed
+
+        def circle_pressed(state):
+            print("Circle:", state)
+        ds.circle_pressed += circle_pressed
+        
+        def triangle_pressed(state):
+            print("Triangle:", state)
+        ds.triangle_pressed += triangle_pressed
+
+        
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -156,46 +187,46 @@ class MainWindow(QMainWindow):
         self.round_widget.resize(v_width, v_height)
         self.round_widget.setStyleSheet(
             """
-            background:rgba(50, 50, 50, 255);
+            background:rgba(50, 50, 50, 250);
             border-radius: 100px;
-            font-size: 16px;
+            font-size: 60px;
             font-style: bold;
             """
         )
         
         lay = QGridLayout(self.round_widget)
 
-        self.label = QLabel('He')
+        self.label = QLabel('↑')
         self.label.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label, 0, 1)
         
-        self.label2 = QLabel('llo')
+        self.label2 = QLabel('←')
         self.label2.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label2, 1, 0)
 
-        self.label3 = QLabel(', Wo')
+        self.label3 = QLabel('→')
         self.label3.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label3, 1, 2)
         
-        self.label4 = QLabel('rld!')
+        self.label4 = QLabel('↓')
         self.label4.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label4, 2, 1)
 
         #
 
-        self.label5 = QLabel('He')
+        self.label5 = QLabel('△')
         self.label5.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label5, 0, 5)
         
-        self.label6 = QLabel('llo')
+        self.label6 = QLabel('⃞')
         self.label6.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label6, 1, 4)
 
-        self.label7 = QLabel(', Wo')
+        self.label7 = QLabel('○')
         self.label7.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label7, 1, 6)
         
-        self.label8 = QLabel('rld!')
+        self.label8 = QLabel('🞩')
         self.label8.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.label8, 2, 5)
 
@@ -204,6 +235,8 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     #run_test()
+    controller = Controller()
     app = QApplication(sys.argv)
     window = MainWindow()
     sys.exit(app.exec())
+    
