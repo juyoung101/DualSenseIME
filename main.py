@@ -6,20 +6,22 @@ import pyautogui
 import sys
 
 # IME
-#   Layer       #Chorded layout number
-#   KeySets     #Chorded layouts
-#   ButtonMap   #Held Buttons
-#  ~pyautogui   #Keyboard emulator for forwarding inputs
-#  *pydualsense #Gamepad Event Connector
-#       #ps: quit;
-#       #mic: send input;
-#       #faces: mark ButtonMap; send input;
-#       #arrows: mark ButtonMap; (update layer); send input;
-#       #shoulders: mark ButtonMap; (update layer);
+#  Layer       #Chorded layout number
+#  KeySets     #Chorded layouts
+#  ButtonMap   #Held Buttons
+# ~pyautogui   #Keyboard emulator for forwarding inputs
+# *pydualsense #Gamepad Event/State Connector
+#    #ps: quit;
+#    #mic: send input;
+#    #faces: mark ButtonMap; send input;
+#    #arrows: mark ButtonMap; (update KeySets); send input;
+#    #shoulders: mark ButtonMap; (update KeySets);
 # qt #GUI App
 #    #label.text = KeySets[Layer];
 #    #label.style = StyleSet[ButtonMap[Button]];
-#   
+#
+
+
 
 class Labels(Enum):
     UP = 1
@@ -79,18 +81,44 @@ class ButtonMap():
     def depress_face(self, value):
         self._faces[value] = False
 
+    def process(self, btn, value):
+        if btn in ["L1", "R1", "L2", "R2"]:
+            self._bumpers[btn] = value
+
     def print(self):
         print(self._bumpers)
         print(self._arrows)
         print(self._faces)
 
-class KeyMap():
+class KeySets():
     _modifiers = {"ctrl": False, "shift": False, "alt": False, "meta": False, "macro": False}
     _keys = {"a" : False, "b" : False, "c" : False, "d" : False, "e" : False, "f" : False, "g" : False, "h" : False, "i" : False, "j" : False,
                 "k" : False, "l" : False, "m" : False, "n" : False, "o" : False, "p" : False, "q" : False, "r" : False, "s" : False, "t" : False,
                 "u" : False, "v" : False, "w" : False, "x" : False, "y" : False, "z" : False,
                 "0" : False, "1" : False, "2" : False, "3" : False, "4" : False, "5" : False, "6" : False, "7" : False, "8" : False, "9" : False,
                 "space": False, "enter" : False, "backspace" : False }
+    _layers = {'1': {'W','A','D','S',
+                     'BACKSPACE','TAB','ENTER','SPACE'},# none
+               '2': {'E','Q','R','F',
+                     'I','J','L','K'},# L1
+               '3': {'H','T','G','COMMA',
+                     'U','Y','O','PERIOD'},# R1
+               '4': {'X','Z','V','C',
+                     'P','B','M','N'},# L2
+               '5': {'CTRL','SHIFT','ALT','META',
+                     'ESC','HOME','END','DEL'},# R2
+               '6': {'ALPHA': ['1','2','3','4'],
+                     'BETA':  ['5','6','7','8'],
+                     'GAMMA': ['9','0','EQUAL','UNDERSCORE'],
+                     'DELTA': ['ASTERISK','FSLASH','PLUS','MINUS']},# L1 R1 MACRO
+               '7': {'ALPHA': ['PGUP','PRINT','PAUSE','PGDN'],
+                     'BETA':  ['BRACERIGHT','BRACELEFT','ANGLERIGHT','ANGLELEFT'],
+                     'GAMMA': ['UPARROW','LEFTARROW','RIGHTARROW','DOWNARROW'],
+                     'DELTA': ['BRACKETRIGHT','BRACKETLEFT','PARENRIGHT','PARENLEFT']},# L2 R2 MACRO
+               '8': {'BANG','ASPERAND','DOLLAR','HASH',
+                     'CARRET','PERCENT','ASTERISK','&'},# L1 R2
+               '9': {'GRAVE', 'FSLASH','TILDE','RSLASH',
+                     'DQUOTE','QUOTE','COLON','SEMICOLON'}}# L2 R1
 
     def __init__(self):
         return
@@ -122,12 +150,13 @@ class KeyMap():
     def print(self):
         print(self._modifiers)
         print(self._keys)
+        print(self._layers)
 
 def test_pyautogui():
-   pyautogui.typewrite('Hello world!\n', interval=0.1)
-   pyautogui.hotkey('ctrl', 'shift', 'alt', 'win', 'l')
-   print(pyautogui.KEYBOARD_KEYS)
-   print(len(pyautogui.KEYBOARD_KEYS))
+    pyautogui.typewrite('Hello world!\n', interval=0.1)
+    pyautogui.hotkey('ctrl', 'shift', 'alt', 'win', 'l')
+    print(pyautogui.KEYBOARD_KEYS)
+    print(len(pyautogui.KEYBOARD_KEYS))
 
 def test_pydualsense():
     def cross_pressed(state):
@@ -145,27 +174,22 @@ def test_pydualsense():
     print(input()) #hang for testing
     ds.close() # closing the controller
 
+def test_KeySets():
+    keySets = KeySets()
+    keySets.print()
+
+def test_ButtonMap():
+    buttonmap = ButtonMap()
+    buttonmap.print()
+
 def test_window():
     app = QApplication(sys.argv)
     window = MainWindow()
     sys.exit(app.exec())
 
-def test_KeyMap():
-    keymap = KeyMap()
-    mods = keymap.read_state_modifiers()
-    keys = keymap.read_state_keys()
-    keymap.print()
-
-def test_ButtonMap():
-    buttonmap = ButtonMap()
-    bumpers = buttonmap.read_state_bumpers()
-    arrows = buttonmap.read_state_arrows()
-    faces = buttonmap.read_state_faces()
-    buttonmap.print()
-
 def run_tests(value):
     if(value == "A"):
-        test_KeyMap()
+        test_KeySets()
         test_ButtonMap()
         test_pyautogui()
     elif(value == "B"):
@@ -174,6 +198,7 @@ def run_tests(value):
         test_window()
 
 class Controller():
+    _inputSystem = ""
     def default_listeners(self, ds):
         def dpad_up_pressed(state):
             print("UP:", state)
@@ -245,8 +270,12 @@ class Controller():
         ds.touch_pressed += touch_pressed
 
     def __init__(self):
+        self.setInputSystem("Event")
         ds = pydualsense() # open controller
         self.setup(ds)
+
+    def setInputSystem(self, value):
+        self._inputSystem = value
 
     def setup(self, ds):
         ds.init() # initialize controller
@@ -257,7 +286,6 @@ class Controller():
         ds.triggerR.setForce(1, 155)
         self.default_listeners(ds)
         self.special_listeners(ds)
-
 
 class MainWindow(QMainWindow):#main window
     window_style_sheet = """
@@ -375,16 +403,38 @@ class MainWindow(QMainWindow):#main window
 
         self.show()
 
+class IME():
+    layer = 0
+    keySets = KeySets()
+    bMap = ButtonMap()
+    def __init__(self):
+        pass#
+    def updateLayer(self):
+        pass#
+    def input(self, btn, value):
+        match(btn):
+            case "L1":
+                self.updateLayer()
+        self.bMap.process(btn, value)
+
 if __name__ == "__main__":
-    mode = "Headless"
-    if(mode == "Test"):
+    mode = "GUI"
+    isThreaded = False
+    if(mode == "Test"): # Basic module functionality tests
         run_tests("A")
         #run_tests("B")
         #run_tests("C")
-    if(mode == "Headless"):
+    if((mode == "Headless") & (isThreaded == True)): # Event-based input system
         controller = Controller()
-    if(mode == "GUI"):
+        controller.inputSystem("Event")
+        ime = IME()#
+    if((mode == "Headless") & (isThreaded == False)): # State-based input system
+        controller = Controller()
+        controller.inputSystem("State")
+        ime = IME()#
+    if(mode == "GUI"): #Qt widget to display active layout, defaults to _-Based system
         controller = Controller()
         app = QApplication(sys.argv)
         window = MainWindow()
+        ime = IME()#
         sys.exit(app.exec())
