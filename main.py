@@ -252,9 +252,12 @@ class Controller():
         ds.init() # initialize controller
         ds.light.setColorI(0,255,0) # set touchpad color to green
         ds.triggerL.setMode(TriggerModes.Rigid)
-        ds.triggerL.setForce(1, 255)
+        ds.triggerR.setMode(TriggerModes.Rigid)
+        ds.triggerL.setForce(1, 155)
+        ds.triggerR.setForce(1, 155)
         self.default_listeners(ds)
         self.special_listeners(ds)
+
 
 class MainWindow(QMainWindow):#main window
     window_style_sheet = """
