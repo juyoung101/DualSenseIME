@@ -1,12 +1,25 @@
-﻿from cProfile import label
-from multiprocessing import Value
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
+﻿from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
 from PySide6.QtCore import Qt
 from pydualsense import pydualsense, TriggerModes
 from enum import Enum
 import pyautogui
-import json
 import sys
+
+# IME
+#   Layer       #Chorded layout number
+#   KeySets     #Chorded layouts
+#   ButtonMap   #Held Buttons
+#  ~pyautogui   #Keyboard emulator for forwarding inputs
+#  *pydualsense #Gamepad Event Connector
+#       #ps: quit;
+#       #mic: send input;
+#       #faces: mark ButtonMap; send input;
+#       #arrows: mark ButtonMap; (update layer); send input;
+#       #shoulders: mark ButtonMap; (update layer);
+# qt #GUI App
+#    #label.text = KeySets[Layer];
+#    #label.style = StyleSet[ButtonMap[Button]];
+#   
 
 class Labels(Enum):
     UP = 1
@@ -26,7 +39,7 @@ class ButtonMap():
     _bumpers = {"L1": False, "R1": False, "L2": False, "R2": False}
     _arrows = {"UA": False, "DA": False, "LA": False, "RA": False}
     _faces = {"UF": False, "DF": False, "LF": False, "RF": False}
-   
+
     def __init__(self):
         return
 
@@ -35,7 +48,7 @@ class ButtonMap():
 
     def read_state_arrows(self):
         return self._arrows
-    
+
     def read_state_faces(self):
         return self._faces
 
@@ -50,7 +63,7 @@ class ButtonMap():
 
     def press_bumper(self, value):
         self._bumpers[value] = True
-    
+
     def press_arrow(self, value):
         self._arrows[value] = True
 
@@ -78,7 +91,7 @@ class KeyMap():
                 "u" : False, "v" : False, "w" : False, "x" : False, "y" : False, "z" : False,
                 "0" : False, "1" : False, "2" : False, "3" : False, "4" : False, "5" : False, "6" : False, "7" : False, "8" : False, "9" : False,
                 "space": False, "enter" : False, "backspace" : False }
-    
+
     def __init__(self):
         return
 
@@ -116,11 +129,10 @@ def test_pyautogui():
    print(pyautogui.KEYBOARD_KEYS)
    print(len(pyautogui.KEYBOARD_KEYS))
 
-def test_pydualsense(window):
+def test_pydualsense():
     def cross_pressed(state):
         print("Cross button state: ")
         print(state)
-        window.label.setStyleSheet('background-clip: content-box; background-color: green;')
 
     ds = pydualsense() # open controller
     ds.init() # initialize controller
@@ -129,8 +141,9 @@ def test_pydualsense(window):
     ds.light.setColorI(0,255,0) # set touchpad color to green
     ds.triggerL.setMode(TriggerModes.Rigid)
     ds.triggerL.setForce(1, 255)
+    print("Press Enter to close app")
     print(input()) #hang for testing
-   # ds.close() # closing the controller
+    ds.close() # closing the controller
 
 def test_window():
     app = QApplication(sys.argv)
@@ -150,13 +163,15 @@ def test_ButtonMap():
     faces = buttonmap.read_state_faces()
     buttonmap.print()
 
-def run_test():
-    test_KeyMap()
-    test_ButtonMap()
-    #test_pyautogui()
-    #test_pydualsense()
-    test_window()
-    return
+def run_tests(value):
+    if(value == "A"):
+        test_KeyMap()
+        test_ButtonMap()
+        test_pyautogui()
+    elif(value == "B"):
+        test_pydualsense()
+    elif(value == "C"):
+        test_window()
 
 class Controller():
     def default_listeners(self, ds):
@@ -167,11 +182,11 @@ class Controller():
         def dpad_left_pressed(state):
             print("LF:", state)
         ds.dpad_left += dpad_left_pressed
-                
+
         def dpad_right_pressed(state):
             print("RT:", state)
         ds.dpad_right += dpad_right_pressed
-        
+
         def dpad_down_pressed(state):
             print("DN:", state)
         ds.dpad_down += dpad_down_pressed
@@ -187,11 +202,11 @@ class Controller():
         def circle_pressed(state):
             print("Circle:", state)
         ds.circle_pressed += circle_pressed
-        
+
         def triangle_pressed(state):
             print("Triangle:", state)
         ds.triangle_pressed += triangle_pressed
-        
+
         def l1_changed(state):
             print("L1:", state)
         ds.l1_changed  += l1_changed
@@ -208,16 +223,38 @@ class Controller():
             print("R2:", state)
         ds.r2_changed  += r2_changed
 
+    def special_listeners(self, ds):
+        def ps_pressed(state):
+            print("PS:", state)
+        ds.ps_pressed += ps_pressed
+
+        def microphone_pressed(state):
+            print("MIC:", state)
+        ds.microphone_pressed += microphone_pressed
+
+        def start_pressed(state):
+            print("ST:", state)
+        ds.share_pressed += start_pressed
+
+        def select_pressed(state):
+            print("SL:", state)
+        ds.option_pressed += select_pressed
+
+        def touch_pressed(state):
+            print("TP:", state)
+        ds.touch_pressed += touch_pressed
+
     def __init__(self):
         ds = pydualsense() # open controller
         self.setup(ds)
-        
+
     def setup(self, ds):
         ds.init() # initialize controller
         ds.light.setColorI(0,255,0) # set touchpad color to green
         ds.triggerL.setMode(TriggerModes.Rigid)
         ds.triggerL.setForce(1, 255)
         self.default_listeners(ds)
+        self.special_listeners(ds)
 
 class MainWindow(QMainWindow):#main window
     window_style_sheet = """
@@ -241,11 +278,11 @@ class MainWindow(QMainWindow):#main window
     style_inactive_b = """
         background-color:none;
     """
-    
+
     labels = {}
 
     def update_label(self, key, value):
-        self.labels[key] = value
+        self.labels[key].text = value
         return
 
     def update_bumper_style(self, key, value):
@@ -270,13 +307,13 @@ class MainWindow(QMainWindow):#main window
         self.round_widget = QWidget(self)
         self.round_widget.resize(v_width, v_height)
         self.round_widget.setStyleSheet(self.window_style_sheet)
-        
+
         lay = QGridLayout(self.round_widget)
 
         self.label = QLabel('↑')
         lay.addWidget(self.label, 0, 1)
         self.labels[Labels.UP] = self.label
-        
+
         self.label2 = QLabel('←')
         lay.addWidget(self.label2, 1, 0)
         self.labels[Labels.LF] = self.label2
@@ -284,7 +321,7 @@ class MainWindow(QMainWindow):#main window
         self.label3 = QLabel('→')
         lay.addWidget(self.label3, 1, 2)
         self.labels[Labels.RT] = self.label3
-        
+
         self.label4 = QLabel('↓')
         lay.addWidget(self.label4, 2, 1)
         self.labels[Labels.DN] = self.label4
@@ -306,9 +343,9 @@ class MainWindow(QMainWindow):#main window
         self.label8 = QLabel('🞩')
         lay.addWidget(self.label8, 2, 5)
         self.labels[Labels.CR] = self.label8
-        
+
         #
-        
+
         self.label9 = QLabel('L1')
         lay.addWidget(self.label9, 0, 0)
         self.labels[Labels.L1] = self.label9
@@ -333,15 +370,18 @@ class MainWindow(QMainWindow):#main window
                 self.labels[i].setStyleSheet(self.style_active_l)
             self.labels[i].setAlignment(Qt.AlignCenter)
 
-        
-
-
         self.show()
 
 if __name__ == "__main__":
-    #run_test()
-    controller = Controller()
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    sys.exit(app.exec())
-    
+    mode = "Headless"
+    if(mode == "Test"):
+        run_tests("A")
+        #run_tests("B")
+        #run_tests("C")
+    if(mode == "Headless"):
+        controller = Controller()
+    if(mode == "GUI"):
+        controller = Controller()
+        app = QApplication(sys.argv)
+        window = MainWindow()
+        sys.exit(app.exec())
