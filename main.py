@@ -22,12 +22,16 @@ import sys
 #
 
 def test_pyautogui():
-    print("Typing string: ")
-    pyautogui.typewrite('Hello world!\n', interval=0.1)
-    print("Sending LinkedIn hotkey")
-    pyautogui.hotkey('ctrl', 'shift', 'alt', 'win', 'l')
     print("Sendable keys:", pyautogui.KEYBOARD_KEYS)
     print("Total:", len(pyautogui.KEYBOARD_KEYS))
+    print("Typing string... ")
+    pyautogui.typewrite('Hello world!\n', interval=0.1)
+    print("Echo:", input())
+    print("Pressing Enter to continue...")
+    pyautogui.press('enter')
+    input()
+    print("Sending LinkedIn hotkey...")
+    pyautogui.hotkey('ctrl', 'shift', 'alt', 'win', 'l')
 
 def test_pydualsense():
     def cross_pressed(state): #event function
