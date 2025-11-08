@@ -21,7 +21,52 @@ import sys
 #    #label.style = StyleSet[ButtonMap[Button]];
 #
 
+def test_pyautogui():
+    print("Typing string: ")
+    pyautogui.typewrite('Hello world!\n', interval=0.1)
+    print("Sending LinkedIn hotkey")
+    pyautogui.hotkey('ctrl', 'shift', 'alt', 'win', 'l')
+    print("Sendable keys:", pyautogui.KEYBOARD_KEYS)
+    print("Total:", len(pyautogui.KEYBOARD_KEYS))
 
+def test_pydualsense():
+    def cross_pressed(state): #event function
+        print("CROSS: ", state)
+    ds = pydualsense() # open controller
+    ds.init() # initialize controller
+    ds.cross_pressed += cross_pressed #attach event function
+    ds.light.setColorI(0,255,0) # set touchpad color to green
+    ds.triggerL.setMode(TriggerModes.Rigid)
+    ds.triggerL.setForce(1, 255)
+    ds.triggerR.setMode(TriggerModes.Pulse)
+    ds.triggerR.setForce(1, 255)
+    print("Press Enter to close app...")
+    print("Echo: ", input()) #hang for testing
+    ds.close()#closing the controller
+    pass
+
+def test_KeySets():
+    keySets = KeySets()
+    keySets.print()
+
+def test_ButtonMap():
+    buttonmap = ButtonMap()
+    buttonmap.print()
+
+def test_window():
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    sys.exit(app.exec())
+
+def run_tests(value):
+    if(value == "A"):
+        test_KeySets()
+        test_ButtonMap()
+        test_pyautogui()
+    elif(value == "B"):
+        test_pydualsense()
+    elif(value == "C"):
+        test_window()
 
 class Labels(Enum):
     UP = 1
@@ -81,22 +126,40 @@ class ButtonMap():
     def depress_face(self, value):
         self._faces[value] = False
 
-    def process(self, btn, value):
-        if btn in ["L1", "R1", "L2", "R2"]:
+    def update(self, btn, value): #Updates to reflect button state
+        if btn in self._bumpers.keys:
             self._bumpers[btn] = value
+        elif btn in self._arrows.keys:
+            self._arrows[btn] = value
+        elif btn in self._faces.keys:
+            self._faces[btn] = value
+
+    def process(self, btn, value):
+        pass #
+
+    def getLayer(self): #codesmell
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == False and self._bumpers["R1"] == False and self._bumpers["R1" == False]:
+            return 1
+        if self._bumpers["L1"] == True and self._bumpers["R1"] == False and self._bumpers["R1"] == False and self._bumpers["R1" == False]:
+            return 2
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == True and self._bumpers["R1"] == False and self._bumpers["R1" == False]:
+            return 3
+        #...
+            #...
+        return 1
 
     def print(self):
-        print(self._bumpers)
-        print(self._arrows)
-        print(self._faces)
+        print("Bumpers:", self._bumpers)
+        print("Arrows:", self._arrows)
+        print("Faces:", self._faces)
 
 class KeySets():
     _modifiers = {"ctrl": False, "shift": False, "alt": False, "meta": False, "macro": False}
     _keys = {"a" : False, "b" : False, "c" : False, "d" : False, "e" : False, "f" : False, "g" : False, "h" : False, "i" : False, "j" : False,
-                "k" : False, "l" : False, "m" : False, "n" : False, "o" : False, "p" : False, "q" : False, "r" : False, "s" : False, "t" : False,
-                "u" : False, "v" : False, "w" : False, "x" : False, "y" : False, "z" : False,
-                "0" : False, "1" : False, "2" : False, "3" : False, "4" : False, "5" : False, "6" : False, "7" : False, "8" : False, "9" : False,
-                "space": False, "enter" : False, "backspace" : False }
+            "k" : False, "l" : False, "m" : False, "n" : False, "o" : False, "p" : False, "q" : False, "r" : False, "s" : False, "t" : False,
+            "u" : False, "v" : False, "w" : False, "x" : False, "y" : False, "z" : False,
+            "0" : False, "1" : False, "2" : False, "3" : False, "4" : False, "5" : False, "6" : False, "7" : False, "8" : False, "9" : False,
+            "space": False, "enter" : False, "backspace" : False }
     _layers = {'1': {'W','A','D','S',
                      'BACKSPACE','TAB','ENTER','SPACE'},# none
                '2': {'E','Q','R','F',
@@ -148,144 +211,102 @@ class KeySets():
         return self._keys[value]
 
     def print(self):
-        print(self._modifiers)
-        print(self._keys)
-        print(self._layers)
-
-def test_pyautogui():
-    pyautogui.typewrite('Hello world!\n', interval=0.1)
-    pyautogui.hotkey('ctrl', 'shift', 'alt', 'win', 'l')
-    print(pyautogui.KEYBOARD_KEYS)
-    print(len(pyautogui.KEYBOARD_KEYS))
-
-def test_pydualsense():
-    def cross_pressed(state):
-        print("Cross button state: ")
-        print(state)
-
-    ds = pydualsense() # open controller
-    ds.init() # initialize controller
-
-    ds.cross_pressed += cross_pressed
-    ds.light.setColorI(0,255,0) # set touchpad color to green
-    ds.triggerL.setMode(TriggerModes.Rigid)
-    ds.triggerL.setForce(1, 255)
-    print("Press Enter to close app")
-    print(input()) #hang for testing
-    ds.close() # closing the controller
-
-def test_KeySets():
-    keySets = KeySets()
-    keySets.print()
-
-def test_ButtonMap():
-    buttonmap = ButtonMap()
-    buttonmap.print()
-
-def test_window():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    sys.exit(app.exec())
-
-def run_tests(value):
-    if(value == "A"):
-        test_KeySets()
-        test_ButtonMap()
-        test_pyautogui()
-    elif(value == "B"):
-        test_pydualsense()
-    elif(value == "C"):
-        test_window()
+        print("Modifiers:", self._modifiers)
+        print("Keys:", self._keys)
+        print("Layers:", self._layers)
 
 class Controller():
     _inputSystem = ""
-    def default_listeners(self, ds):
+    ds = pydualsense() # open controller
+    def default_listeners(self):
         def dpad_up_pressed(state):
             print("UP:", state)
-        ds.dpad_up += dpad_up_pressed
+        self.ds.dpad_up += dpad_up_pressed
 
         def dpad_left_pressed(state):
             print("LF:", state)
-        ds.dpad_left += dpad_left_pressed
+        self.ds.dpad_left += dpad_left_pressed
 
         def dpad_right_pressed(state):
             print("RT:", state)
-        ds.dpad_right += dpad_right_pressed
+        self.ds.dpad_right += dpad_right_pressed
 
         def dpad_down_pressed(state):
             print("DN:", state)
-        ds.dpad_down += dpad_down_pressed
+        self.ds.dpad_down += dpad_down_pressed
 
         def cross_pressed(state):
             print("Cross:", state)
-        ds.cross_pressed += cross_pressed
+        self.ds.cross_pressed += cross_pressed
 
         def square_pressed(state):
             print("Square:", state)
-        ds.square_pressed += square_pressed
+        self.ds.square_pressed += square_pressed
 
         def circle_pressed(state):
             print("Circle:", state)
-        ds.circle_pressed += circle_pressed
+        self.ds.circle_pressed += circle_pressed
 
         def triangle_pressed(state):
             print("Triangle:", state)
-        ds.triangle_pressed += triangle_pressed
+        self.ds.triangle_pressed += triangle_pressed
 
         def l1_changed(state):
             print("L1:", state)
-        ds.l1_changed  += l1_changed
+        self.ds.l1_changed  += l1_changed
 
         def r1_changed(state):
             print("R1:", state)
-        ds.r1_changed  += r1_changed
+        self.ds.r1_changed  += r1_changed
 
         def l2_changed(state):
             print("L2:", state)
-        ds.l2_changed  += l2_changed
+        self.ds.l2_changed  += l2_changed
 
         def r2_changed(state):
             print("R2:", state)
-        ds.r2_changed  += r2_changed
+        self.ds.r2_changed  += r2_changed
 
-    def special_listeners(self, ds):
+    def special_listeners(self):
         def ps_pressed(state):
             print("PS:", state)
-        ds.ps_pressed += ps_pressed
+        self.ds.ps_pressed += ps_pressed
 
         def microphone_pressed(state):
             print("MIC:", state)
-        ds.microphone_pressed += microphone_pressed
+        self.ds.microphone_pressed += microphone_pressed
 
         def start_pressed(state):
             print("ST:", state)
-        ds.share_pressed += start_pressed
+        self.ds.share_pressed += start_pressed
 
         def select_pressed(state):
             print("SL:", state)
-        ds.option_pressed += select_pressed
+        self.ds.option_pressed += select_pressed
 
         def touch_pressed(state):
             print("TP:", state)
-        ds.touch_pressed += touch_pressed
+        self.ds.touch_pressed += touch_pressed
 
     def __init__(self):
         self.setInputSystem("Event")
-        ds = pydualsense() # open controller
-        self.setup(ds)
+        self.setup()
 
     def setInputSystem(self, value):
         self._inputSystem = value
 
-    def setup(self, ds):
-        ds.init() # initialize controller
-        ds.light.setColorI(0,255,0) # set touchpad color to green
-        ds.triggerL.setMode(TriggerModes.Rigid)
-        ds.triggerR.setMode(TriggerModes.Rigid)
-        ds.triggerL.setForce(1, 155)
-        ds.triggerR.setForce(1, 155)
-        self.default_listeners(ds)
-        self.special_listeners(ds)
+    def setup(self):
+        self.ds.init() # initialize controller
+        self.ds.light.setColorI(0,255,0) # set touchpad color to green
+        self.ds.triggerL.setMode(TriggerModes.Rigid)
+        self.ds.triggerR.setMode(TriggerModes.Rigid)
+        self.ds.triggerL.setForce(1, 155)
+        self.ds.triggerR.setForce(1, 155)
+        self.default_listeners()
+        self.special_listeners()
+
+    def readButton(self, value):
+        return self.ds.state[value]
 
 class MainWindow(QMainWindow):#main window
     window_style_sheet = """
@@ -404,21 +425,24 @@ class MainWindow(QMainWindow):#main window
         self.show()
 
 class IME():
-    layer = 0
+    layer = 1
     keySets = KeySets()
     bMap = ButtonMap()
+
     def __init__(self):
         pass#
+
     def updateLayer(self):
-        pass#
+        self.layer = self.bMap.getLayer()#
+
     def input(self, btn, value):
-        match(btn):
-            case "L1":
-                self.updateLayer()
-        self.bMap.process(btn, value)
+        self.bMap.update(btn, value)
+        if btn in ["L1","R1","L2","R2","UA","DA","LA","RA"]:
+            self.updateLayer()
+        self.bMap.process(btn, value) #Handle chorded button press, chording buttons enable meta layouts, terminal buttons send input 
 
 if __name__ == "__main__":
-    mode = "GUI"
+    mode = "Test"
     isThreaded = False
     if(mode == "Test"): # Basic module functionality tests
         run_tests("A")
