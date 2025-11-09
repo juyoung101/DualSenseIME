@@ -175,6 +175,18 @@ class ButtonMap():
         if self._bumpers["L1"] == False and self._bumpers["R1"] == True and self._bumpers["L2"] == True and self._bumpers["R2"] == False: #L2R1
             return 9
         return 1
+    
+    def get_button_number(self, button):
+        match(button):
+            case "UA": return 0
+            case "LA": return 1
+            case "RA": return 2
+            case "DA": return 3
+            case "UF": return 4
+            case "LF": return 5
+            case "RF": return 6
+            case "DF": return 7
+        return 0
 
     def print(self):
         print("Bumpers:", self._bumpers)
@@ -188,28 +200,28 @@ class KeySets():
             "u" : False, "v" : False, "w" : False, "x" : False, "y" : False, "z" : False,
             "0" : False, "1" : False, "2" : False, "3" : False, "4" : False, "5" : False, "6" : False, "7" : False, "8" : False, "9" : False,
             "space": False, "enter" : False, "backspace" : False }
-    _layers = {'1': ['W','A','D','S',
-                     'BACKSPACE','TAB','ENTER','SPACE'],# none
-               '2': ['E','Q','R','F',
-                    'I','J','L','K'],# L1
-               '3': ['H','T','G','COMMA',
-                   'U','Y','O','PERIOD'],# R1
-               '4': ['X','Z','V','C',
-                   'P','B','M','N'],# L2
-               '5': ['CTRL','SHIFT','ALT','META',
-                   'ESC','HOME','END','DEL'],# R2
+    _layers = {'1': ['w','a','d','s',
+                     'backspace','tav','enter','space'],# none
+               '2': ['e','q','r','f',
+                     'i','j','l','k'],# L1
+               '3': ['h','t','g',',',
+                     'u','y','o','.'],# R1
+               '4': ['x','z','v','c',
+                     'p','b','m','n'],# L2
+               '5': ['ctrl','shift','alt','win',
+                     'escape','home','end','delete'],# R2
                '6': [['1','2','3','4'],
                      ['5','6','7','8'],
-                     ['9','0','EQUAL','UNDERSCORE'],
-                     ['ASTERISK','FSLASH','PLUS','MINUS']],# L1 R1 MACRO
-               '7': [['PGUP','PRINT','PAUSE','PGDN'],
-                     ['BRACERIGHT','BRACELEFT','ANGLERIGHT','ANGLELEFT'],
-                     ['UPARROW','LEFTARROW','RIGHTARROW','DOWNARROW'],
-                     ['BRACKETRIGHT','BRACKETLEFT','PARENRIGHT','PARENLEFT']],# L2 R2 MACRO
-               '8': ['BANG','ASPERAND','DOLLAR','HASH',
-                   'CARRET','PERCENT','ASTERISK','&'],# L1 R2
-               '9': ['GRAVE', 'FSLASH','TILDE','RSLASH',
-                   'DQUOTE','QUOTE','COLON','SEMICOLON']}# L2 R1
+                     ['9','0','=','_'],
+                     ['*','/','+','-']],# L1 R1 MACRO
+               '7': [['pageup','print','pause','pagedown'],
+                     ['}','{','>','<'],
+                     ['up','left','right','down'],
+                     [']','[',')','(']],# L2 R2 MACRO
+               '8': ['!','@','$','#',
+                     '^','%','*','&'],# L1 R2
+               '9': ['`', '\\','~','?',
+                     '"',"'",':',';']}# L2 R1
 
     def __init__(self):
         return
@@ -494,11 +506,14 @@ class IME():
             if self.macro > 1:
                 print("Macro:", self.macro)
                 print("Layout:", available_buttons[(self.macro%4)-1])
-                pass#pyautogui.press(KeySets[l+m][b])
+                if button in ["UF","LF","RF","DF"]:
+                    print("pyautogui.press(available_buttons[buttonNum])")# send off only face presses
         else:
             available_buttons = self.keySets.get_layer(self.layer)
             print (available_buttons)
-            pyautogui.press(available_buttons[0]) #TODO: holding not currently supported
+            buttonNum = self.bMap.get_button_number(button)
+            pyautogui.press(available_buttons[buttonNum]) #TODO: holding not currently supported
+                                                  #TODO: select key from layer, use enum?
 
     def updateLayer(self):
         self.layer = self.bMap.getLayer()
