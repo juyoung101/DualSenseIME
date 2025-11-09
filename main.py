@@ -1,4 +1,5 @@
-﻿from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
+﻿from multiprocessing import Value
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
 from PySide6.QtCore import Qt
 from pydualsense import pydualsense, TriggerModes
 from functools import partial
@@ -6,21 +7,32 @@ from enum import Enum
 import pyautogui
 import sys
 
-# IME
+#IME
 #  Layer       #Chorded layout number
 #  KeySets     #Chorded layouts
 #  ButtonMap   #Held Buttons
-# ~pyautogui   #Keyboard emulator for forwarding inputs
-# *pydualsense #Gamepad Event/State Connector
+#~pyautogui    #Keyboard emulator for forwarding inputs
+#*pydualsense  #Gamepad Event/State Connector
 #    #ps: quit;
 #    #mic: send input;
 #    #faces: mark ButtonMap; send input;
 #    #arrows: mark ButtonMap; (update KeySets); send input;
 #    #shoulders: mark ButtonMap; (update KeySets);
-# qt #GUI App
+#qt #GUI App
 #    #label.text = KeySets[Layer];
 #    #label.style = StyleSet[ButtonMap[Button]];
 #
+#
+#  layer - combo        dpad    face
+#     1  - none         wads    mods
+#     2  - L1           eqrf    ijlk
+#     3  - R1           htg,    uyo.
+#     4  - L2           xzvc    pbmn
+#     5  - R2           mods    mods
+#     6  - L1R1         macro   num1/num2/num3/sym5
+#     7  - L2R2         macro   mods/sym6/dpad/sym7
+#     8  - L1R2         sym1    sym2
+#     9  - L2R1         sym3    sym4
 
 def test_pyautogui():
     print("Sendable keys:", pyautogui.KEYBOARD_KEYS)
@@ -144,14 +156,24 @@ class ButtonMap():
         pass #
 
     def getLayer(self): #codesmell
-        if self._bumpers["L1"] == False and self._bumpers["R1"] == False and self._bumpers["L2"] == False and self._bumpers["R2"] == False:
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == False and self._bumpers["L2"] == False and self._bumpers["R2"] == False: #none
             return 1
-        if self._bumpers["L1"] == True and self._bumpers["R1"] == False and self._bumpers["L2"] == False and self._bumpers["R2"] == False:
+        if self._bumpers["L1"] == True and self._bumpers["R1"] == False and self._bumpers["L2"] == False and self._bumpers["R2"] == False: #L1
             return 2
-        if self._bumpers["L1"] == False and self._bumpers["R1"] == True and self._bumpers["L2"] == False and self._bumpers["R2"] == False:
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == True and self._bumpers["L2"] == False and self._bumpers["R2"] == False: #R1
             return 3
-        #...
-            #...
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == False and self._bumpers["L2"] == True and self._bumpers["R2"] == False: #L2
+            return 4
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == False and self._bumpers["L2"] == False and self._bumpers["R2"] == True: #R2
+            return 5
+        if self._bumpers["L1"] == True and self._bumpers["R1"] == True and self._bumpers["L2"] == False and self._bumpers["R2"] == False: #L1R1
+            return 6
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == False and self._bumpers["L2"] == True and self._bumpers["R2"] == True: #L2R2
+            return 7
+        if self._bumpers["L1"] == True and self._bumpers["R1"] == False and self._bumpers["L2"] == False and self._bumpers["R2"] == True: #L1R2
+            return 8
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == True and self._bumpers["L2"] == True and self._bumpers["R2"] == False: #L2R1
+            return 9
         return 1
 
     def print(self):
@@ -215,6 +237,9 @@ class KeySets():
 
     def get_key(self, value):
         return self._keys[value]
+
+    def get_layer(self, value):
+        return self._layers.get(str(value))
 
     def print(self):
         print("Modifiers:", self._modifiers)
@@ -300,6 +325,16 @@ class Controller():
         self.ds.l2_changed += partial(listener, button="L2")
         self.ds.r2_changed += partial(listener, button="R2")
 
+        self.ds.dpad_up += partial(listener, button="UA")
+        self.ds.dpad_left += partial(listener, button="LA")
+        self.ds.dpad_right += partial(listener, button="RA")
+        self.ds.dpad_down += partial(listener, button="DA")
+
+        self.ds.triangle_pressed += partial(listener, button="UF")
+        self.ds.square_pressed += partial(listener, button="LF")
+        self.ds.circle_pressed += partial(listener, button="RF")
+        self.ds.cross_pressed += partial(listener, button="DF")
+
     def __init__(self):
         self.setInputSystem("Event")
         self.setup()
@@ -308,15 +343,20 @@ class Controller():
         self._inputSystem = value
 
     def setup(self):
-        self.ds.init() # initialize controller
-        self.ds.light.setColorI(0,255,0) # set touchpad color to green
-        self.ds.triggerL.setMode(TriggerModes.Rigid)
-        self.ds.triggerR.setMode(TriggerModes.Rigid)
-        self.ds.triggerL.setForce(1, 155)
-        self.ds.triggerR.setForce(1, 155)
-        if self._inputSystem == "Event":
-            #self.default_listeners()
-            self.special_listeners()
+        try:
+            self.ds.init() # initialize controller
+            self.ds.light.setColorI(0,255,0) # set touchpad color to green
+            self.ds.triggerL.setMode(TriggerModes.Rigid)
+            self.ds.triggerR.setMode(TriggerModes.Rigid)
+            self.ds.triggerL.setForce(1, 155)
+            self.ds.triggerR.setForce(1, 155)
+            if self._inputSystem == "Event":
+                #self.default_listeners()
+                self.special_listeners()
+        except Exception as e:
+            print("controller not available, please try again")
+            print("exception message:", e)
+            pass
 
     def readButton(self, value):
         return self.ds.state[value]
@@ -439,20 +479,58 @@ class MainWindow(QMainWindow):#main window
 
 class IME():
     layer = 1
+    macro = 0
     keySets = KeySets()
     bMap = ButtonMap()
 
     def __init__(self):
         pass#
+    
+    def send(self, layer, button):
+        print("Sent layer %d button %s " % (layer, button))
+        #check KeySets for available layout
+        if layer in [6,7]: #check macros if layer 67s
+            if self.macro > 1:
+                print("Macro:", self.macro)
+                pass#pyautogui.press(KeySets[l+m][b])
+        else:
+            pass#pyautogui.press(KeySets[l][b])
 
     def updateLayer(self):
-        self.layer = self.bMap.getLayer()#
+        self.layer = self.bMap.getLayer()
+        print("Current Layer:", self.layer)
+        print("Current Layout:", self.keySets.get_layer(self.layer))#
 
-    def input(self, btn, value):
-        self.bMap.update(btn, value)
-        if btn in ["L1","R1","L2","R2","UA","DA","LA","RA"]: #Chording buttons
+    def action(self, button, value): #Processes macro and terminal buttons
+        if button in ["L1","R1","L2","R3"]: #bumper buttons aren't handled here
+            pass#
+        if button in ["UA","LA","RA","DA"]: #arrow buttons
+            if(self.layer in [6,7]):#calculate macro layer
+                self.macro = 0
+                if value: 
+                    if (self.layer == 7):
+                        self.macro += 4
+                    if(button == "UA"): self.macro += 1
+                    if(button == "LA"): self.macro += 2
+                    if(button == "RA"): self.macro += 3
+                    if(button == "DA"): self.macro += 4
+                print("Macro layer: ", self.macro)
+                print("Toggled MACRO on layer ", self.layer)
+            elif value: #non-macro presses only
+                self.send(self.layer, button) #terminal buttons
+        if button in ["UF","LF","RF","DF"]:#face buttons
+            if value:#presses only
+                self.send(self.layer, button)#terminal buttons
+
+    def input(self, button, value):
+        self.bMap.update(button, value)
+        if button in ["L1","R1","L2","R2"]: #Chording buttons
             self.updateLayer()
-        self.bMap.process(btn, value) #Handle chorded button press, chording buttons enable meta layouts, terminal buttons send input 
+        self.action(button, value) #Handle chorded button press, arrow button chording enables meta layouts for face buttons, terminal buttons check meta then send input 
+
+    def print(self):
+        self.keySets.print()
+        self.bMap.print()
 
 if __name__ == "__main__":
     mode = "Headless"
@@ -464,19 +542,20 @@ if __name__ == "__main__":
     if((mode == "Headless") & (isThreaded == True)): # Event-based input system
         controller = Controller()
         controller.setInputSystem("Event")
-        ime = IME()#
-        def chordListener(state, button):#button param supplied by partial function
-            print("Headless bumper state:", button, state)
-            ime.input(btn=button, value=state)
-            pass#TODO update IME layer
-        controller.chord_listeners(chordListener)
+        ime = IME()
+        def listener(state, button): #button supplied by partial function
+            #print("event:", button, state)
+            ime.input(button, value=state) #tell ime the tea
+            #ime.print()
+            pass#
+        controller.chord_listeners(listener)
     if((mode == "Headless") & (isThreaded == False)): # State-based input system
         controller = Controller()
         controller.setInputSystem("State")
-        ime = IME()#
+        ime = IME()
     if(mode == "GUI"): #Qt widget to display active layout, defaults to _-Based system
         controller = Controller()
         app = QApplication(sys.argv)
         window = MainWindow()
-        ime = IME()#
+        ime = IME()
         sys.exit(app.exec())
