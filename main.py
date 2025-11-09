@@ -1,6 +1,7 @@
 ﻿from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QGridLayout
 from PySide6.QtCore import Qt
 from pydualsense import pydualsense, TriggerModes
+from functools import partial
 from enum import Enum
 import pyautogui
 import sys
@@ -131,22 +132,23 @@ class ButtonMap():
         self._faces[value] = False
 
     def update(self, btn, value): #Updates to reflect button state
-        if btn in self._bumpers.keys:
+        if btn in ["L1","R1","L2","R2"]:
             self._bumpers[btn] = value
-        elif btn in self._arrows.keys:
+        elif btn in ["UA","DA","LA","RA"]:
             self._arrows[btn] = value
-        elif btn in self._faces.keys:
+        elif btn in ["UF","LF","RF","DF"]:
             self._faces[btn] = value
 
     def process(self, btn, value):
+        print("Processing", btn, value)
         pass #
 
     def getLayer(self): #codesmell
-        if self._bumpers["L1"] == False and self._bumpers["R1"] == False and self._bumpers["R1"] == False and self._bumpers["R1" == False]:
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == False and self._bumpers["L2"] == False and self._bumpers["R2"] == False:
             return 1
-        if self._bumpers["L1"] == True and self._bumpers["R1"] == False and self._bumpers["R1"] == False and self._bumpers["R1" == False]:
+        if self._bumpers["L1"] == True and self._bumpers["R1"] == False and self._bumpers["L2"] == False and self._bumpers["R2"] == False:
             return 2
-        if self._bumpers["L1"] == False and self._bumpers["R1"] == True and self._bumpers["R1"] == False and self._bumpers["R1" == False]:
+        if self._bumpers["L1"] == False and self._bumpers["R1"] == True and self._bumpers["L2"] == False and self._bumpers["R2"] == False:
             return 3
         #...
             #...
@@ -239,21 +241,21 @@ class Controller():
             print("DN:", state)
         self.ds.dpad_down += dpad_down_pressed
 
-        def cross_pressed(state):
-            print("Cross:", state)
-        self.ds.cross_pressed += cross_pressed
+        def triangle_pressed(state):
+            print("UF:", state)
+        self.ds.triangle_pressed += triangle_pressed
 
         def square_pressed(state):
-            print("Square:", state)
+            print("LF:", state)
         self.ds.square_pressed += square_pressed
 
         def circle_pressed(state):
-            print("Circle:", state)
+            print("RF:", state)
         self.ds.circle_pressed += circle_pressed
 
-        def triangle_pressed(state):
-            print("Triangle:", state)
-        self.ds.triangle_pressed += triangle_pressed
+        def cross_pressed(state):
+            print("DF:", state)
+        self.ds.cross_pressed += cross_pressed
 
         def l1_changed(state):
             print("L1:", state)
@@ -292,6 +294,12 @@ class Controller():
             print("TP:", state)
         self.ds.touch_pressed += touch_pressed
 
+    def chord_listeners(self, listener): #excessive sugar but this is a really neat method for condensing and generalizing this specific code
+        self.ds.l1_changed += partial(listener, button="L1")
+        self.ds.r1_changed += partial(listener, button="R1")
+        self.ds.l2_changed += partial(listener, button="L2")
+        self.ds.r2_changed += partial(listener, button="R2")
+
     def __init__(self):
         self.setInputSystem("Event")
         self.setup()
@@ -306,8 +314,9 @@ class Controller():
         self.ds.triggerR.setMode(TriggerModes.Rigid)
         self.ds.triggerL.setForce(1, 155)
         self.ds.triggerR.setForce(1, 155)
-        self.default_listeners()
-        self.special_listeners()
+        if self._inputSystem == "Event":
+            #self.default_listeners()
+            self.special_listeners()
 
     def readButton(self, value):
         return self.ds.state[value]
@@ -441,24 +450,29 @@ class IME():
 
     def input(self, btn, value):
         self.bMap.update(btn, value)
-        if btn in ["L1","R1","L2","R2","UA","DA","LA","RA"]:
+        if btn in ["L1","R1","L2","R2","UA","DA","LA","RA"]: #Chording buttons
             self.updateLayer()
         self.bMap.process(btn, value) #Handle chorded button press, chording buttons enable meta layouts, terminal buttons send input 
 
 if __name__ == "__main__":
-    mode = "Test"
-    isThreaded = False
+    mode = "Headless"
+    isThreaded = True
     if(mode == "Test"): # Basic module functionality tests
         run_tests("A")
         #run_tests("B")
         #run_tests("C")
     if((mode == "Headless") & (isThreaded == True)): # Event-based input system
         controller = Controller()
-        controller.inputSystem("Event")
+        controller.setInputSystem("Event")
         ime = IME()#
+        def chordListener(state, button):#button param supplied by partial function
+            print("Headless bumper state:", button, state)
+            ime.input(btn=button, value=state)
+            pass#TODO update IME layer
+        controller.chord_listeners(chordListener)
     if((mode == "Headless") & (isThreaded == False)): # State-based input system
         controller = Controller()
-        controller.inputSystem("State")
+        controller.setInputSystem("State")
         ime = IME()#
     if(mode == "GUI"): #Qt widget to display active layout, defaults to _-Based system
         controller = Controller()
