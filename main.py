@@ -201,7 +201,7 @@ class KeySets():
             "0" : False, "1" : False, "2" : False, "3" : False, "4" : False, "5" : False, "6" : False, "7" : False, "8" : False, "9" : False,
             "space": False, "enter" : False, "backspace" : False }
     _layers = {'1': ['w','a','d','s',
-                     'backspace','tav','enter','space'],# none
+                     'backspace','tab','enter','space'],# none
                '2': ['e','q','r','f',
                      'i','j','l','k'],# L1
                '3': ['h','t','g',',',
