@@ -188,28 +188,28 @@ class KeySets():
             "u" : False, "v" : False, "w" : False, "x" : False, "y" : False, "z" : False,
             "0" : False, "1" : False, "2" : False, "3" : False, "4" : False, "5" : False, "6" : False, "7" : False, "8" : False, "9" : False,
             "space": False, "enter" : False, "backspace" : False }
-    _layers = {'1': {'W','A','D','S',
-                     'BACKSPACE','TAB','ENTER','SPACE'},# none
-               '2': {'E','Q','R','F',
-                     'I','J','L','K'},# L1
-               '3': {'H','T','G','COMMA',
-                     'U','Y','O','PERIOD'},# R1
-               '4': {'X','Z','V','C',
-                     'P','B','M','N'},# L2
-               '5': {'CTRL','SHIFT','ALT','META',
-                     'ESC','HOME','END','DEL'},# R2
-               '6': {'ALPHA': ['1','2','3','4'],
-                     'BETA':  ['5','6','7','8'],
-                     'GAMMA': ['9','0','EQUAL','UNDERSCORE'],
-                     'DELTA': ['ASTERISK','FSLASH','PLUS','MINUS']},# L1 R1 MACRO
-               '7': {'ALPHA': ['PGUP','PRINT','PAUSE','PGDN'],
-                     'BETA':  ['BRACERIGHT','BRACELEFT','ANGLERIGHT','ANGLELEFT'],
-                     'GAMMA': ['UPARROW','LEFTARROW','RIGHTARROW','DOWNARROW'],
-                     'DELTA': ['BRACKETRIGHT','BRACKETLEFT','PARENRIGHT','PARENLEFT']},# L2 R2 MACRO
-               '8': {'BANG','ASPERAND','DOLLAR','HASH',
-                     'CARRET','PERCENT','ASTERISK','&'},# L1 R2
-               '9': {'GRAVE', 'FSLASH','TILDE','RSLASH',
-                     'DQUOTE','QUOTE','COLON','SEMICOLON'}}# L2 R1
+    _layers = {'1': ['W','A','D','S',
+                     'BACKSPACE','TAB','ENTER','SPACE'],# none
+               '2': ['E','Q','R','F',
+                    'I','J','L','K'],# L1
+               '3': ['H','T','G','COMMA',
+                   'U','Y','O','PERIOD'],# R1
+               '4': ['X','Z','V','C',
+                   'P','B','M','N'],# L2
+               '5': ['CTRL','SHIFT','ALT','META',
+                   'ESC','HOME','END','DEL'],# R2
+               '6': [['1','2','3','4'],
+                     ['5','6','7','8'],
+                     ['9','0','EQUAL','UNDERSCORE'],
+                     ['ASTERISK','FSLASH','PLUS','MINUS']],# L1 R1 MACRO
+               '7': [['PGUP','PRINT','PAUSE','PGDN'],
+                     ['BRACERIGHT','BRACELEFT','ANGLERIGHT','ANGLELEFT'],
+                     ['UPARROW','LEFTARROW','RIGHTARROW','DOWNARROW'],
+                     ['BRACKETRIGHT','BRACKETLEFT','PARENRIGHT','PARENLEFT']],# L2 R2 MACRO
+               '8': ['BANG','ASPERAND','DOLLAR','HASH',
+                   'CARRET','PERCENT','ASTERISK','&'],# L1 R2
+               '9': ['GRAVE', 'FSLASH','TILDE','RSLASH',
+                   'DQUOTE','QUOTE','COLON','SEMICOLON']}# L2 R1
 
     def __init__(self):
         return
@@ -487,23 +487,32 @@ class IME():
         pass#
     
     def send(self, layer, button):
-        print("Sent layer %d button %s " % (layer, button))
-        #check KeySets for available layout
-        if layer in [6,7]: #check macros if layer 67s
+        print("Sending %d - %s " % (layer, button))
+        
+        available_buttons = self.keySets.get_layer(self.layer) #check KeySets for available layout
+        if layer in [6,7]: #check macros if layer 67
             if self.macro > 1:
                 print("Macro:", self.macro)
+                print("Layout:", available_buttons[(self.macro%4)-1])
                 pass#pyautogui.press(KeySets[l+m][b])
         else:
-            pass#pyautogui.press(KeySets[l][b])
+            available_buttons = self.keySets.get_layer(self.layer)
+            print (available_buttons)
+            pyautogui.press(available_buttons[0]) #TODO: holding not currently supported
 
     def updateLayer(self):
         self.layer = self.bMap.getLayer()
-        print("Current Layer:", self.layer)
-        print("Current Layout:", self.keySets.get_layer(self.layer))#
+        if self.macro == 0: 
+            if(self.layer not in [6,7]): 
+                print("Current Layout: ", self.layer, self.keySets.get_layer(self.layer))#
+            else:
+                print("Current Layout: ", self.layer, self.keySets.get_layer(self.layer)[0])
+        else: print("Current Macro Layout:", self.layer, self.keySets.get_layer(self.layer)[(self.macro%4)-1])#
 
     def action(self, button, value): #Processes macro and terminal buttons
         if button in ["L1","R1","L2","R3"]: #bumper buttons aren't handled here
-            pass#
+            if value == False:
+                pass#depress all keys
         if button in ["UA","LA","RA","DA"]: #arrow buttons
             if(self.layer in [6,7]):#calculate macro layer
                 self.macro = 0
@@ -514,8 +523,9 @@ class IME():
                     if(button == "LA"): self.macro += 2
                     if(button == "RA"): self.macro += 3
                     if(button == "DA"): self.macro += 4
-                print("Macro layer: ", self.macro)
-                print("Toggled MACRO on layer ", self.layer)
+                    self.updateLayer()
+                else:
+                    pass#depress all keys
             elif value: #non-macro presses only
                 self.send(self.layer, button) #terminal buttons
         if button in ["UF","LF","RF","DF"]:#face buttons
